@@ -135,6 +135,9 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
         const keys = await crypto.subtle.generateKey(alg, false, ['sign', 'verify']);
         const serial = crypto.getRandomValues(new Uint8Array(16));
         serial[0] &= 0x7f;
+        if (serial[0] === 0) {
+          serial[1] |= 0x80;
+        }
         const cert = await x509.X509CertificateGenerator.createSelfSigned({
           serialNumber: Convert.ToHex(serial),
           name,
@@ -192,6 +195,9 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
 
       const serial = crypto.getRandomValues(new Uint8Array(16));
       serial[0] &= 0x7f;
+      if (serial[0] === 0) {
+        serial[1] |= 0x80;
+      }
       const cert = await x509.X509CertificateGenerator.create({
         serialNumber: Convert.ToHex(serial),
         subject: params.subject,
