@@ -1,10 +1,10 @@
-import { Box, Button, List, ListItem, Step, StepLabel, Stepper, TextField, Typography } from "@mui/material";
+import { Box, Button, FormControl, InputLabel, List, ListItem, MenuItem, Select, Step, StepLabel, Stepper, TextField, Typography } from "@mui/material";
 import * as React from 'react';
 import { Pkcs10CertificateRequest, X509Certificate } from "@peculiar/x509";
 import { Convert } from "pvtsutils";
 
 import { CertificateDetails } from "./CertificateDetails";
-import { useCaContext } from "./CaProvider";
+import { CertificateProfile, useCaContext } from "./CaProvider";
 import { useApplicationContext } from "./AppProvider";
 
 export interface CaIssueCertificateViewProps {
@@ -21,6 +21,7 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [file, setFile] = React.useState<File | null>(null);
   const [isDragOver, setIsDragOver] = React.useState(false);
+  const [profile, setProfile] = React.useState<CertificateProfile>('none');
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -102,7 +103,8 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
     (async () => {
       const issuedCert = await enrollCertificate(csr, {
         subject: certName,
-        validity: certValidity
+        validity: certValidity,
+        profile,
       });
       setCert(issuedCert.toString());
       setActiveStep(2);
@@ -153,7 +155,7 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
         </Stepper>
       </Box>
       {
-        activeStep === 0 &&
+        activeStep === 0 && // Import CSR
         (
           <Box sx={{ mt: 2 }}>
             <Box>
@@ -193,7 +195,7 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
         )
       }
       {
-        activeStep === 1 &&
+        activeStep === 1 && // Issue Certificate
         (
           <Box>
             <Typography variant='body2' paragraph>Please enter the certificate details below:</Typography>
@@ -204,6 +206,17 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
               <ListItem>
                 <TextField label='Validity (days)' value={certValidity} onChange={handleCertValidityChange} size='small' sx={{ width: '100%' }} />
               </ListItem>
+              <ListItem>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Profile</InputLabel>
+                  <Select value={profile} onChange={(e) => setProfile(e.target.value as CertificateProfile)} size='small'>
+                    <MenuItem value="none"><em>No profile</em></MenuItem>
+                    <MenuItem value="code_signing">Code Signing</MenuItem>
+                    <MenuItem value="smime">S/MIME</MenuItem>
+                    <MenuItem value="pdf_signing">PDF Document Signing</MenuItem>
+                  </Select>
+                </FormControl>
+              </ListItem>
             </List>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 1 }}>
               <Button onClick={handleBack}>Back</Button>
@@ -213,7 +226,7 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
         )
       }
       {
-        activeStep === 2 &&
+        activeStep === 2 && // Done
         (
           <Box>
             <Typography variant='body2' paragraph>Certificate issued successfully.</Typography>

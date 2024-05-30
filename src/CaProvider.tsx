@@ -70,9 +70,12 @@ export class CaDataBase {
   }
 }
 
+export type CertificateProfile = 'none' | 'code_signing' | 'smime' | 'pdf_signing';
+
 export interface CaEnrolParams {
   subject: string;
   validity: number;
+  profile: CertificateProfile;
 }
 
 export interface CaContextProps {
@@ -198,7 +201,8 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
       if (serial[0] === 0) {
         serial[1] |= 0x80;
       }
-      const cert = await x509.X509CertificateGenerator.create({
+
+      const certParams: x509.X509CertificateCreateParams = {
         serialNumber: Convert.ToHex(serial),
         subject: params.subject,
         issuer: caCert.subject,
@@ -212,14 +216,28 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
         signingKey: value.key,
         extensions: [
           new x509.BasicConstraintsExtension(false, undefined, true),
-          new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature | x509.KeyUsageFlags.keyEncipherment, true),
-          await x509.AuthorityKeyIdentifierExtension.create(caCert),
-          await x509.SubjectKeyIdentifierExtension.create(req.publicKey),
-          new x509.ExtendedKeyUsageExtension([
-            x509.ExtendedKeyUsage.codeSigning,
-          ])
         ],
-      });
+      };
+      const extensions = certParams.extensions || [];
+      switch (params.profile) {
+        case 'code_signing':
+          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature, true));
+          extensions.push(new x509.ExtendedKeyUsageExtension([x509.ExtendedKeyUsage.codeSigning]));
+          break;
+        case 'smime':
+          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature | x509.KeyUsageFlags.dataEncipherment | x509.KeyUsageFlags.keyEncipherment, true));
+          extensions.push(new x509.ExtendedKeyUsageExtension([x509.ExtendedKeyUsage.emailProtection, x509.ExtendedKeyUsage.clientAuth]));
+          break;
+        case 'pdf_signing':
+          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature, true));
+          extensions.push(new x509.ExtendedKeyUsageExtension(['1.2.840.113583.1.1.10'])); // Adobe PDF
+          break;
+        default:
+          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature, true));
+          break;
+      }
+
+      const cert = await x509.X509CertificateGenerator.create(certParams);
 
       return cert;
     },
