@@ -216,6 +216,8 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
         signingKey: value.key,
         extensions: [
           new x509.BasicConstraintsExtension(false, undefined, true),
+          await x509.AuthorityKeyIdentifierExtension.create(caCert),
+          await x509.SubjectKeyIdentifierExtension.create(req.publicKey),
         ],
       };
       const extensions = certParams.extensions || [];
