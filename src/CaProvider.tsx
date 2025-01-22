@@ -70,7 +70,7 @@ export class CaDataBase {
   }
 }
 
-export type CertificateProfile = 'none' | 'code_signing' | 'smime' | 'pdf_signing';
+export type CertificateProfile = 'none' | 'code_signing' | 'smime' | 'pdf_signing' | 'cms_encryption';
 
 export interface CaEnrolParams {
   subject: string;
@@ -233,6 +233,10 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
         case 'pdf_signing':
           extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature, true));
           extensions.push(new x509.ExtendedKeyUsageExtension(['1.2.840.113583.1.1.10'])); // Adobe PDF
+          break;
+        case 'cms_encryption':
+          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.keyEncipherment | x509.KeyUsageFlags.dataEncipherment, true));
+          extensions.push(new x509.ExtendedKeyUsageExtension(['1.3.6.1.4.1.311.80.1'])); // Document Encryption
           break;
         default:
           extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature, true));

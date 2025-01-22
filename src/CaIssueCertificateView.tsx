@@ -214,6 +214,7 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
                     <MenuItem value="code_signing">Code Signing</MenuItem>
                     <MenuItem value="smime">S/MIME</MenuItem>
                     <MenuItem value="pdf_signing">PDF Document Signing</MenuItem>
+                    <MenuItem value="cms_encryption">CMS Encryption</MenuItem>
                   </Select>
                 </FormControl>
               </ListItem>
