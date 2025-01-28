@@ -85,7 +85,7 @@ export interface CaContextProps {
   initialize(name: string, algorithm: string): void;
   remove(): void;
   download(): void;
-  enrollCertificate(csr: string, params: CaEnrolParams): Promise<x509.X509Certificate>;
+  enrollCertificate(key: x509.PublicKey, params: CaEnrolParams): Promise<x509.X509Certificate>;
 }
 
 export const CaContext = React.createContext<CaContextProps | undefined>(undefined);
@@ -188,12 +188,11 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
         })();
       }
     },
-    enrollCertificate: async (csr: string, params: CaEnrolParams) => {
+    enrollCertificate: async (key: x509.PublicKey, params: CaEnrolParams) => {
       if (!value) {
         throw new Error('CA is not initialized');
       }
 
-      const req = new x509.Pkcs10CertificateRequest(csr);
       const caCert = new x509.X509Certificate(value.cert);
 
       const serial = crypto.getRandomValues(new Uint8Array(16));
@@ -212,12 +211,12 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
           hash: 'SHA-256',
           ...caCert.publicKey.algorithm,
         },
-        publicKey: req.publicKey,
+        publicKey: key,
         signingKey: value.key,
         extensions: [
           new x509.BasicConstraintsExtension(false, undefined, true),
           await x509.AuthorityKeyIdentifierExtension.create(caCert),
-          await x509.SubjectKeyIdentifierExtension.create(req.publicKey),
+          await x509.SubjectKeyIdentifierExtension.create(key),
         ],
       };
       const extensions = certParams.extensions || [];

@@ -1,6 +1,6 @@
 import { Box, Button, FormControl, InputLabel, List, ListItem, MenuItem, Select, Step, StepLabel, Stepper, TextField, Typography } from "@mui/material";
 import * as React from 'react';
-import { Pkcs10CertificateRequest, X509Certificate } from "@peculiar/x509";
+import { Pkcs10CertificateRequest, PublicKey, X509Certificate } from "@peculiar/x509";
 import { Convert } from "pvtsutils";
 
 import { CertificateDetails } from "./CertificateDetails";
@@ -15,7 +15,7 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
   const { enrollCertificate } = useCaContext();
   const [activeStep, setActiveStep] = React.useState<number>(0);
   const [cert, setCert] = React.useState<string>('');
-  const [csr, setCsr] = React.useState<string>('');
+  const [csr, setCsr] = React.useState<PublicKey | null>(null);
   const [certName, setCertName] = React.useState<string>('CN=Test certificate, O=GoodKey, C=US');
   const [certValidity, setCertValidity] = React.useState<number>(365);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -38,22 +38,25 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
       const reader = new FileReader();
       reader.onload = function (e) {
         const contents = e.target?.result;
-        if (typeof contents === 'string') {
-          let csrString: string = '';
+        if (contents instanceof ArrayBuffer) {
+          const view = new Uint8Array(contents);
+          const bufOrStr = view[0] === 0x30 ? contents : Convert.ToBinary(contents);
           try {
-            const csr = contents.charCodeAt(0) === 0x30
-              ? new Pkcs10CertificateRequest(Convert.FromBinary(contents))
-              : new Pkcs10CertificateRequest(contents);
-            csrString = csr.toString('pem');
-          } catch (e) {
-            setError(e as Error);
-            return;
+            const publicKey = new PublicKey(bufOrStr);
+            setCsr(publicKey);
+          } catch {
+            try {
+              const csr = new Pkcs10CertificateRequest(bufOrStr);
+              setCsr(csr.publicKey);
+            } catch (e) {
+              setError(new Error('Invalid Public Key or CSR'));
+              return;
+            }
           }
 
-          setCsr(csrString);
         }
       };
-      reader.readAsBinaryString(file);
+      reader.readAsArrayBuffer(file);
     }
   }, [file]);
 
@@ -75,7 +78,19 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
   };
 
   const handleCsrChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCsr(e.target.value);
+    const value = e.target.value;
+    try {
+      const publicKey = new PublicKey(value);
+      setCsr(publicKey);
+    } catch {
+      try {
+        const csr = new Pkcs10CertificateRequest(value);
+        setCsr(csr.publicKey);
+      } catch (e) {
+        setError(new Error('Invalid Public Key or CSR'));
+        return;
+      }
+    }
   };
 
   const handleImportCsr = () => {
@@ -83,7 +98,6 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
       setError(new Error('CSR is empty, please paste a valid CSR in PEM format'));
       return;
     }
-    new Pkcs10CertificateRequest(csr);
     setActiveStep(1);
   };
 
@@ -101,6 +115,10 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
 
   const handleIssue = () => {
     (async () => {
+      if (!csr) {
+        setError(new Error('CSR is empty, please paste a valid CSR in PEM format'));
+        return;
+      }
       const issuedCert = await enrollCertificate(csr, {
         subject: certName,
         validity: certValidity,
@@ -126,7 +144,7 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
   };
 
   const handleDone = () => {
-    setCsr('');
+    setCsr(null);
     setActiveStep(0);
     setCert('');
   };
@@ -159,7 +177,7 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
         (
           <Box sx={{ mt: 2 }}>
             <Box>
-              <Typography variant='body2' paragraph>Please paste the CSR in PEM format below:</Typography>
+              <Typography variant='body2' paragraph>Please paste the CSR or Public Key in PEM format below:</Typography>
               <TextField multiline fullWidth rows={10} value={csr} onChange={handleCsrChange}
                 InputProps={{
                   style: { fontFamily: 'Monaco, monospace', fontSize: '12px' }
@@ -184,7 +202,7 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
               }}
             >
               <Typography variant='body2' paragraph sx={{ pointerEvents: 'none' }}>
-                Drag and drop the CSR in DER or PEM format here, or click here to upload
+                Drag and drop the CSR or Public Key in DER or PEM format here, or click here to upload
               </Typography>
               <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />
             </Box>
