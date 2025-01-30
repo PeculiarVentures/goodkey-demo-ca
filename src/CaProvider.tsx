@@ -1,9 +1,9 @@
 import * as x509 from "@peculiar/x509";
 import { Convert } from "pvtsutils";
-import * as React from 'react';
+import * as React from "react";
 
-const CA_DB_NAME = 'ca-db';
-const CA_STORE_NAME = 'ca-store';
+const CA_DB_NAME = "ca-db";
+const CA_STORE_NAME = "ca-store";
 
 export interface CaObject {
   id: string;
@@ -28,35 +28,35 @@ export class CaDataBase {
 
       openReq.onupgradeneeded = (event: any) => {
         const db: IDBDatabase = event.target.result;
-        db.createObjectStore(this.storeName, { keyPath: 'id' });
+        db.createObjectStore(this.storeName, { keyPath: "id" });
       };
 
       openReq.onsuccess = (event: any) => resolve(event.target.result);
-      openReq.onerror = () => reject(new Error('Failed to open database'));
+      openReq.onerror = () => reject(new Error("Failed to open database"));
     });
   }
 
   async addObject(object: CaObject): Promise<void> {
     const db = await this.openDB();
-    const transaction = db.transaction(this.storeName, 'readwrite');
+    const transaction = db.transaction(this.storeName, "readwrite");
     const store = transaction.objectStore(this.storeName);
     store.add(object);
   }
 
   async getObjectByKey(key: string): Promise<CaObject> {
     const db = await this.openDB();
-    const transaction = db.transaction(this.storeName, 'readonly');
+    const transaction = db.transaction(this.storeName, "readonly");
     const store = transaction.objectStore(this.storeName);
     return new Promise((resolve, reject) => {
       const request = store.get(key);
       request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(new Error('Failed to get object'));
+      request.onerror = () => reject(new Error("Failed to get object"));
     });
   }
 
   async deleteObjectByKey(key: string): Promise<void> {
     const db = await this.openDB();
-    const transaction = db.transaction(this.storeName, 'readwrite');
+    const transaction = db.transaction(this.storeName, "readwrite");
     const store = transaction.objectStore(this.storeName);
     store.delete(key);
   }
@@ -65,12 +65,17 @@ export class CaDataBase {
     const deleteReq = indexedDB.deleteDatabase(this.dbName);
     return new Promise((resolve, reject) => {
       deleteReq.onsuccess = () => resolve();
-      deleteReq.onerror = () => reject(new Error('Failed to delete database'));
+      deleteReq.onerror = () => reject(new Error("Failed to delete database"));
     });
   }
 }
 
-export type CertificateProfile = 'none' | 'code_signing' | 'smime' | 'pdf_signing' | 'cms_encryption';
+export type CertificateProfile =
+  | "none"
+  | "code_signing"
+  | "smime"
+  | "pdf_signing"
+  | "cms_encryption";
 
 export interface CaEnrolParams {
   subject: string;
@@ -85,10 +90,15 @@ export interface CaContextProps {
   initialize(name: string, algorithm: string): void;
   remove(): void;
   download(): void;
-  enrollCertificate(key: x509.PublicKey, params: CaEnrolParams): Promise<x509.X509Certificate>;
+  enrollCertificate(
+    key: x509.PublicKey,
+    params: CaEnrolParams
+  ): Promise<x509.X509Certificate>;
 }
 
-export const CaContext = React.createContext<CaContextProps | undefined>(undefined);
+export const CaContext = React.createContext<CaContextProps | undefined>(
+  undefined
+);
 
 interface CaProviderProps {
   name: string;
@@ -115,27 +125,40 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
     value,
     initialize: (name: string, algorithm: string) => {
       (async () => {
-        let alg: RsaHashedKeyGenParams | (EcKeyGenParams & { hash: string; });
+        let alg: RsaHashedKeyGenParams | (EcKeyGenParams & { hash: string });
         switch (algorithm) {
-          case 'rsa2048':
-            alg = { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]) };
+          case "rsa2048":
+            alg = {
+              name: "RSASSA-PKCS1-v1_5",
+              hash: "SHA-256",
+              modulusLength: 2048,
+              publicExponent: new Uint8Array([1, 0, 1]),
+            };
             break;
-          case 'rsa4096':
-            alg = { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256', modulusLength: 4096, publicExponent: new Uint8Array([1, 0, 1]) };
+          case "rsa4096":
+            alg = {
+              name: "RSASSA-PKCS1-v1_5",
+              hash: "SHA-256",
+              modulusLength: 4096,
+              publicExponent: new Uint8Array([1, 0, 1]),
+            };
             break;
-          case 'ecp256':
-            alg = { name: 'ECDSA', namedCurve: 'P-256', hash: 'SHA-256' };
+          case "ecp256":
+            alg = { name: "ECDSA", namedCurve: "P-256", hash: "SHA-256" };
             break;
-          case 'ecp384':
-            alg = { name: 'ECDSA', namedCurve: 'P-384', hash: 'SHA-384' };
+          case "ecp384":
+            alg = { name: "ECDSA", namedCurve: "P-384", hash: "SHA-384" };
             break;
-          case 'ecp521':
-            alg = { name: 'ECDSA', namedCurve: 'P-521', hash: 'SHA-512' };
+          case "ecp521":
+            alg = { name: "ECDSA", namedCurve: "P-521", hash: "SHA-512" };
             break;
           default:
             throw new Error(`Unsupported algorithm: ${algorithm}`);
         }
-        const keys = await crypto.subtle.generateKey(alg, false, ['sign', 'verify']);
+        const keys = await crypto.subtle.generateKey(alg, false, [
+          "sign",
+          "verify",
+        ]);
         const serial = crypto.getRandomValues(new Uint8Array(16));
         serial[0] &= 0x7f;
         if (serial[0] === 0) {
@@ -150,13 +173,16 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
           signingAlgorithm: alg,
           extensions: [
             new x509.BasicConstraintsExtension(true, 0, true),
-            new x509.KeyUsagesExtension(x509.KeyUsageFlags.keyCertSign | x509.KeyUsageFlags.cRLSign, true),
+            new x509.KeyUsagesExtension(
+              x509.KeyUsageFlags.keyCertSign | x509.KeyUsageFlags.cRLSign,
+              true
+            ),
             await x509.AuthorityKeyIdentifierExtension.create(keys.publicKey),
             await x509.SubjectKeyIdentifierExtension.create(keys.publicKey),
-          ]
+          ],
         });
 
-        const pem = cert.toString('pem');
+        const pem = cert.toString("pem");
         const obj = {
           id: params.name,
           name,
@@ -178,9 +204,11 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
         (async () => {
           const cert = new x509.X509Certificate(value.cert);
           const thumbprint = await cert.getThumbprint();
-          const blob = new Blob([cert.toString('pem')], { type: 'application/x-x509-ca-cert' });
+          const blob = new Blob([cert.toString("pem")], {
+            type: "application/x-x509-ca-cert",
+          });
           const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
+          const a = document.createElement("a");
           a.href = url;
           a.download = `${Convert.ToHex(thumbprint)}.pem`;
           a.click();
@@ -190,7 +218,7 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
     },
     enrollCertificate: async (key: x509.PublicKey, params: CaEnrolParams) => {
       if (!value) {
-        throw new Error('CA is not initialized');
+        throw new Error("CA is not initialized");
       }
 
       const caCert = new x509.X509Certificate(value.cert);
@@ -208,7 +236,7 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
         notBefore: new Date(),
         notAfter: new Date(Date.now() + 1000 * 60 * 60 * 24 * params.validity),
         signingAlgorithm: {
-          hash: 'SHA-256',
+          hash: "SHA-256",
           ...caCert.publicKey.algorithm,
         },
         publicKey: key,
@@ -221,24 +249,77 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
       };
       const extensions = certParams.extensions || [];
       switch (params.profile) {
-        case 'code_signing':
-          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature, true));
-          extensions.push(new x509.ExtendedKeyUsageExtension([x509.ExtendedKeyUsage.codeSigning]));
+        case "code_signing":
+          extensions.push(
+            new x509.KeyUsagesExtension(
+              x509.KeyUsageFlags.digitalSignature,
+              true
+            )
+          );
+          extensions.push(
+            new x509.ExtendedKeyUsageExtension([
+              x509.ExtendedKeyUsage.codeSigning,
+            ])
+          );
           break;
-        case 'smime':
-          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature | x509.KeyUsageFlags.dataEncipherment | x509.KeyUsageFlags.keyEncipherment, true));
-          extensions.push(new x509.ExtendedKeyUsageExtension([x509.ExtendedKeyUsage.emailProtection, x509.ExtendedKeyUsage.clientAuth]));
+        case "smime":
+          const name = new x509.Name(params.subject);
+          const email = name.getField("E");
+          if (!email.length) {
+            throw new Error("Subject must contain an email field (E)");
+          }
+          extensions.push(
+            new x509.KeyUsagesExtension(
+              x509.KeyUsageFlags.digitalSignature |
+                x509.KeyUsageFlags.keyEncipherment |
+                x509.KeyUsageFlags.nonRepudiation,
+              true
+            )
+          );
+          extensions.push(
+            new x509.ExtendedKeyUsageExtension([
+              x509.ExtendedKeyUsage.emailProtection,
+            ])
+          );
+          extensions.push(
+            new x509.SubjectAlternativeNameExtension([
+              {
+                type: "email",
+                value: email[0],
+              },
+            ])
+          );
           break;
-        case 'pdf_signing':
-          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature, true));
-          extensions.push(new x509.ExtendedKeyUsageExtension(['1.2.840.113583.1.1.10'])); // Adobe PDF
+        case "pdf_signing":
+          extensions.push(
+            new x509.KeyUsagesExtension(
+              x509.KeyUsageFlags.digitalSignature,
+              true
+            )
+          );
+          extensions.push(
+            new x509.ExtendedKeyUsageExtension(["1.2.840.113583.1.1.10"])
+          ); // Adobe PDF
           break;
-        case 'cms_encryption':
-          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.keyEncipherment | x509.KeyUsageFlags.dataEncipherment, true));
-          extensions.push(new x509.ExtendedKeyUsageExtension(['1.3.6.1.4.1.311.80.1'])); // Document Encryption
+        case "cms_encryption":
+          extensions.push(
+            new x509.KeyUsagesExtension(
+              x509.KeyUsageFlags.keyEncipherment |
+                x509.KeyUsageFlags.dataEncipherment,
+              true
+            )
+          );
+          extensions.push(
+            new x509.ExtendedKeyUsageExtension(["1.3.6.1.4.1.311.80.1"])
+          ); // Document Encryption
           break;
         default:
-          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature, true));
+          extensions.push(
+            new x509.KeyUsagesExtension(
+              x509.KeyUsageFlags.digitalSignature,
+              true
+            )
+          );
           break;
       }
 
@@ -249,16 +330,14 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
   };
 
   return (
-    <CaContext.Provider value={context}>
-      {params.children}
-    </CaContext.Provider>
+    <CaContext.Provider value={context}>{params.children}</CaContext.Provider>
   );
 };
 
 export const useCaContext = () => {
   const context = React.useContext(CaContext);
   if (context === undefined) {
-    throw new Error('useCaContext must be used within a CaProvider');
+    throw new Error("useCaContext must be used within a CaProvider");
   }
   return context;
 };
