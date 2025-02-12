@@ -25,7 +25,7 @@ import { CertificateDetails } from "./CertificateDetails";
 import { CertificateProfile, useCaContext } from "./CaProvider";
 import { useApplicationContext } from "./AppProvider";
 
-export interface CaIssueCertificateViewProps {}
+export interface CaIssueCertificateViewProps { }
 
 export const CaIssueCertificateView: React.FC<
   CaIssueCertificateViewProps
@@ -36,7 +36,7 @@ export const CaIssueCertificateView: React.FC<
   const [cert, setCert] = React.useState<string>("");
   const [csr, setCsr] = React.useState<PublicKey | null>(null);
   const [certName, setCertName] = React.useState<string>(
-    "CN=Test certificate, O=GoodKey, C=US"
+    "CN=Test certificate, O=GoodKey, C=US, E=your@email.com"
   );
   const [certValidity, setCertValidity] = React.useState<number>(365);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
