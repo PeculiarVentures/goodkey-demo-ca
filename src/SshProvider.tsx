@@ -178,10 +178,10 @@ export const SshProvider: React.FC<SshProviderProps> = (params) => {
             throw new Error(`Unsupported SSH key algorithm: ${algorithm}`);
         }
 
-        const keys = await crypto.subtle.generateKey(alg as any, false, [
+        const keys = await crypto.subtle.generateKey(alg, false, [
           "sign",
           "verify",
-        ]);
+        ]) as CryptoKeyPair;
 
         // Create SSH public key
         const sshPublicKey = await ssh.SshPublicKey.fromWebCrypto(keys.publicKey, keyType as any);
