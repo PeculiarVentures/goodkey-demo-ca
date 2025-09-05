@@ -72,12 +72,12 @@ export const SshCertificateDetails: React.FC<SshCertificateDetailsProps> = ({
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
         {certFingerprint && (
           <Typography variant="body2">
-            <strong>Public key:</strong> {certDetails?.publicKey?.keyType?.toUpperCase()}-CERT SHA256:{certFingerprint}
+            <strong>Public key:</strong> {certDetails?.publicKey?.keyType?.toUpperCase()}-CERT {certFingerprint}
           </Typography>
         )}
         {caFingerprint && (
           <Typography variant="body2">
-            <strong>Signing CA:</strong> {certDetails?.signatureKey?.keyType?.toUpperCase()} SHA256:{caFingerprint} (using {certDetails?.signatureKey?.keyType})
+            <strong>Signing CA:</strong> {certDetails?.signatureKey?.keyType?.toUpperCase()} {caFingerprint} (using {certDetails?.signatureKey?.keyType})
           </Typography>
         )}
         <Typography variant="body2">
