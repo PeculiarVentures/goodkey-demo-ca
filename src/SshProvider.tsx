@@ -1,4 +1,5 @@
 import * as ssh from "@peculiar/ssh";
+import { Convert } from "pvtsutils";
 import * as React from "react";
 
 const SSH_CA_DB_NAME = "ssh-ca-db";
@@ -221,8 +222,12 @@ export const SshProvider: React.FC<SshProviderProps> = (params) => {
         // Create SSH certificate using SshCertificateBuilder
         const builder = ssh.SSH.createCertificate(userSshPublicKey);
 
+        const randomBytes = new Uint8Array(8);
+        crypto.getRandomValues(randomBytes);
+        const serial = BigInt('0x' + Convert.ToHex(randomBytes));
+
         builder
-          .setSerial(BigInt(Math.floor(Math.random() * 1000000)))
+          .setSerial(serial)
           .setType(params.certType)
           .setKeyId(params.keyId)
           .setValidPrincipals(params.principals)
