@@ -12,6 +12,7 @@
     "@mui/icons-material": "^5.15.13",
     "@mui/material": "^5.15.13",
     "@mui/styled-engine-sc": "^5.14.10",
+    "@peculiar/ssh": "^1.0.0",
     "@peculiar/x509": "^1.9.7",
     "notistack": "^3.0.1",
     "pvtsutils": "^1.3.5",
