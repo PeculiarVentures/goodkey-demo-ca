@@ -42,7 +42,11 @@ export class SshCaDataBase {
     const db = await this.openDB();
     const transaction = db.transaction(this.storeName, "readwrite");
     const store = transaction.objectStore(this.storeName);
-    store.add(object);
+    return new Promise((resolve, reject) => {
+      const request = store.add(object);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(new Error("Failed to add SSH CA object"));
+    });
   }
 
   async getObjectByKey(key: string): Promise<SshCaObject> {
@@ -60,7 +64,11 @@ export class SshCaDataBase {
     const db = await this.openDB();
     const transaction = db.transaction(this.storeName, "readwrite");
     const store = transaction.objectStore(this.storeName);
-    store.delete(key);
+    return new Promise<void>((resolve, reject) => {
+      const request = store.delete(key);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(new Error("Failed to delete SSH CA object"));
+    });
   }
 
   async deleteTable(): Promise<void> {
