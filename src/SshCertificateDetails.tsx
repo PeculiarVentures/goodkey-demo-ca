@@ -11,7 +11,7 @@ export const SshCertificateDetails: React.FC<SshCertificateDetailsProps> = ({
   certificate,
   caPublicKey,
 }) => {
-  const [certDetails, setCertDetails] = React.useState<any>(null);
+  const [certDetails, setCertDetails] = React.useState<ssh.SshCertificate | null>(null);
   const [certFingerprint, setCertFingerprint] = React.useState<string>('');
   const [caFingerprint, setCaFingerprint] = React.useState<string>('');
   const [error, setError] = React.useState<string>("");
