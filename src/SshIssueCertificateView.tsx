@@ -19,6 +19,9 @@ import { SshEnrollParams, SshCertificateType, useSshCaContext } from "./SshProvi
 import { SshCertificateDetails } from "./SshCertificateDetails";
 import { useApplicationContext } from "./AppProvider";
 
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+const CERTIFICATE_BACKDATE_MS = 5 * 60 * 1000;
+
 export interface SshIssueCertificateViewProps { }
 
 export const SshIssueCertificateView: React.FC<
@@ -119,8 +122,8 @@ export const SshIssueCertificateView: React.FC<
 
       try {
         const now = new Date();
-        const validAfter = new Date(now.getTime() - 5 * 60 * 1000); // 5 minutes ago
-        const validBefore = new Date(now.getTime() + validityDays * 24 * 60 * 60 * 1000);
+        const validAfter = new Date(now.getTime() - CERTIFICATE_BACKDATE_MS);
+        const validBefore = new Date(now.getTime() + validityDays * MILLISECONDS_PER_DAY);
 
         const params: SshEnrollParams = {
           principals: principals.split(',').map(p => p.trim()).filter(p => p),
