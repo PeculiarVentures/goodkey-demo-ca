@@ -14,6 +14,8 @@ import {
   Typography,
 } from "@mui/material";
 import * as React from "react";
+import * as ssh from "@peculiar/ssh";
+import * as x509 from "@peculiar/x509";
 
 import { SshEnrollParams, SshCertificateType, useSshCaContext } from "./SshProvider";
 import { SshCertificateDetails } from "./SshCertificateDetails";
@@ -21,6 +23,86 @@ import { useApplicationContext } from "./AppProvider";
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 const CERTIFICATE_BACKDATE_MS = 5 * 60 * 1000;
+
+async function parsePublicKey(input: string | ArrayBuffer): Promise<string> {
+  let trimmed: string = "";
+  let derData: ArrayBuffer | null = null;
+
+  if (input instanceof ArrayBuffer) {
+    const view = new Uint8Array(input);
+    if (view[0] === 0x30) {
+      // ASN.1 DER
+      derData = input;
+    } else {
+      // Not DER, treat as text
+      trimmed = new TextDecoder().decode(view).trim();
+    }
+  } else {
+    trimmed = input.trim();
+  }
+
+  if (derData) {
+    // Try X509 cert DER
+    try {
+      const cert = new x509.X509Certificate(derData);
+      const cryptoKey = await cert.publicKey.export();
+      const sshKey = await ssh.SshPublicKey.fromWebCrypto(cryptoKey);
+      return await sshKey.toSSH();
+    } catch {
+      // Try SPKI DER
+      try {
+        const publicKey = new x509.PublicKey(derData);
+        const cryptoKey = await publicKey.export();
+        const sshKey = await ssh.SshPublicKey.fromWebCrypto(cryptoKey);
+        return await sshKey.toSSH();
+      } catch {
+        throw new Error("Unsupported DER format. Only X509 certificate and SPKI public key DER are supported.");
+      }
+    }
+  }
+
+  // Process as text
+  if (!trimmed) {
+    throw new Error("Input is empty");
+  }
+
+  // Try SSH formats first
+  try {
+    const sshKey = await ssh.SshPublicKey.fromSSH(trimmed);
+    return await sshKey.toSSH();
+  } catch {
+    // Not SSH, continue
+  }
+
+  try {
+    const sshCert = await ssh.SshCertificate.fromSSH(trimmed);
+    return await sshCert.publicKey.toSSH();
+  } catch {
+    // Not SSH certificate, continue
+  }
+
+  // Try X509 certificate
+  try {
+    const cert = new x509.X509Certificate(trimmed);
+    const cryptoKey = await cert.publicKey.export();
+    const sshKey = await ssh.SshPublicKey.fromWebCrypto(cryptoKey);
+    return await sshKey.toSSH();
+  } catch {
+    // Not X509 cert, continue
+  }
+
+  // Try SPKI public key
+  try {
+    const publicKey = new x509.PublicKey(trimmed);
+    const cryptoKey = await publicKey.export();
+    const sshKey = await ssh.SshPublicKey.fromWebCrypto(cryptoKey);
+    return await sshKey.toSSH();
+  } catch {
+    // Not SPKI, continue
+  }
+
+  throw new Error("Unsupported key format. Please provide SSH public key, SSH certificate, X509 certificate, or SPKI public key in PEM or DER format.");
+}
 
 export interface SshIssueCertificateViewProps { }
 
@@ -53,13 +135,18 @@ export const SshIssueCertificateView: React.FC<
   React.useEffect(() => {
     if (file) {
       const reader = new FileReader();
-      reader.onload = function (e) {
+      reader.onload = async function (e) {
         const contents = e.target?.result;
-        if (typeof contents === "string") {
-          setSshPublicKey(contents.trim());
+        if (contents instanceof ArrayBuffer) {
+          try {
+            const parsedKey = await parsePublicKey(contents);
+            setSshPublicKey(parsedKey);
+          } catch (error) {
+            setError(error as Error);
+          }
         }
       };
-      reader.readAsText(file);
+      reader.readAsArrayBuffer(file);
     }
   }, [file]);
 
@@ -81,8 +168,19 @@ export const SshIssueCertificateView: React.FC<
     }
   };
 
-  const handleSshPublicKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSshPublicKey(e.target.value);
+  const handleSshPublicKeyChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (!value.trim()) {
+      setSshPublicKey("");
+      return;
+    }
+    try {
+      const parsedKey = await parsePublicKey(value);
+      setSshPublicKey(parsedKey);
+    } catch (error) {
+      // If parsing fails, clear the field
+      setSshPublicKey("");
+    }
   };
 
   const handleImportKey = () => {
@@ -176,7 +274,7 @@ export const SshIssueCertificateView: React.FC<
         </Typography>
         <Stepper activeStep={activeStep} sx={{ mt: 2, mb: 2 }}>
           <Step>
-            <StepLabel>Import SSH Public Key</StepLabel>
+            <StepLabel>Import Public Key</StepLabel>
           </Step>
           <Step>
             <StepLabel>Issue Certificate</StepLabel>
@@ -191,7 +289,7 @@ export const SshIssueCertificateView: React.FC<
         <Box sx={{ mt: 2 }}>
           <Box>
             <Typography variant="body2" paragraph>
-              Please paste the SSH public key below:
+              Please paste the SSH public key, SSH certificate, X509 certificate, or SPKI public key below. The field will display the extracted SSH public key:
             </Typography>
             <TextField
               multiline
@@ -231,14 +329,14 @@ export const SshIssueCertificateView: React.FC<
               paragraph
               sx={{ pointerEvents: "none" }}
             >
-              Drag and drop SSH public key file here or click here to upload
+              Drag and drop SSH public key, SSH certificate, X509 certificate, or SPKI public key file here or click here to upload
             </Typography>
             <input
               type="file"
               ref={fileInputRef}
               style={{ display: "none" }}
               onChange={handleFileChange}
-              accept=".pub,.pem,.txt"
+              accept=".pub,.pem,.txt,.cer,.crt,.der"
             />
           </Box>
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
