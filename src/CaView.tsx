@@ -1,5 +1,8 @@
 import {
   Box,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Button,
   ButtonGroup,
   FormControl,
@@ -13,7 +16,7 @@ import {
   Typography,
 } from "@mui/material";
 import * as React from "react";
-import { DeleteForever, Download } from "@mui/icons-material";
+import { DeleteForever, Download, ExpandMore } from "@mui/icons-material";
 
 import { useCaContext } from "./CaProvider";
 import { CertificateDetails } from "./CertificateDetails";
@@ -68,7 +71,7 @@ export const CaView: React.FC<CaViewProps> = () => {
   const caCert = value?.cert || "";
 
   return (
-    <Paper elevation={3} sx={{ p: 4 }}>
+    <Paper elevation={0} sx={{ p: { xs: 1, sm: 3 } }}>
       {/* Initialize CA */}
       <StateBox state={state} value={1}>
         <Typography variant="h6" component="p" sx={{ mb: 2 }}>
@@ -122,32 +125,43 @@ export const CaView: React.FC<CaViewProps> = () => {
       </StateBox>
       {/* CA initialized */}
       <StateBox state={state} value={2}>
-        <Typography variant="h6" component="p" sx={{ mb: 2, flexGrow: 1 }}>
-          Certificate Authority
-        </Typography>
-        <Typography variant="body2" component="p" sx={{ mb: 2 }}>
-          This is a demo Certificate Authority. Private key and certificate are stored in the
-          browser's IndexedDB. This CA is intended for demo purposes only and is not trusted by any
-          browser or operating system.
-        </Typography>
-        <Box>
-          <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
-            <Box sx={{ flexGrow: 1 }} />
-            <ButtonGroup variant="outlined" size="small" color="primary">
-              <Tooltip title="Download CA Certificate">
-                <Button onClick={handleDownload} size="small">
-                  <Download fontSize="small" />
-                </Button>
-              </Tooltip>
-              <Tooltip title="Remove CA">
-                <Button onClick={handleRemove} size="small">
-                  <DeleteForever fontSize="small" />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
-          </Box>
-          <CertificateDetails certificate={caCert} />
-        </Box>
+        <Accordion
+          disableGutters
+          elevation={0}
+          sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}
+        >
+          <AccordionSummary expandIcon={<ExpandMore />}>
+            <Typography variant="body2">
+              <strong>Issuer: {value?.name}</strong> · Browser-local demo CA
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              The CA private key and certificate stay in this browser's IndexedDB. This demo CA is
+              not trusted by browsers or operating systems.
+            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
+              <Box sx={{ flexGrow: 1 }} />
+              <ButtonGroup variant="outlined" size="small" color="primary">
+                <Tooltip title="Download CA Certificate">
+                  <Button
+                    onClick={handleDownload}
+                    size="small"
+                    aria-label="Download CA certificate"
+                  >
+                    <Download fontSize="small" />
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Remove CA">
+                  <Button onClick={handleRemove} size="small" aria-label="Remove CA">
+                    <DeleteForever fontSize="small" />
+                  </Button>
+                </Tooltip>
+              </ButtonGroup>
+            </Box>
+            <CertificateDetails certificate={caCert} />
+          </AccordionDetails>
+        </Accordion>
         <CaIssueCertificateView />
       </StateBox>
     </Paper>

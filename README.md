@@ -10,8 +10,10 @@ and [@peculiar/ssh](https://github.com/PeculiarVentures/ssh) libraries.
 ### X.509 CA
 
 - Initialize a Certificate Authority with self-signed root certificate
-- Issue X.509 certificates based on Certificate Signing Requests (CSRs)
-- Support for multiple certificate profiles (Code Signing, S/MIME, PDF Signing, etc.)
+- Import verified CSRs, SPKI public keys, or X.509 certificates in PEM or DER format
+- Configure editable presets for Code Signing, S/MIME, PDF Signing, and CMS Encryption
+- Edit subject DN, validity, typed SANs, key usage, and standard or custom EKU OIDs
+- Save, manage, and exchange browser-local certificate templates
 - Support for RSA and ECDSA key algorithms
 - Certificate details viewing and validation
 - Download certificates in PEM format
@@ -25,8 +27,50 @@ and [@peculiar/ssh](https://github.com/PeculiarVentures/ssh) libraries.
 - SSH certificate details viewing
 - Download SSH certificates
 
-The application stores all private keys and certificates securely in the browser's IndexedDB,
-ensuring they never leave your local environment.
+The application stores CA private keys and certificates in the browser's IndexedDB.
+Certificate templates use localStorage. Certificate issuance happens locally in the browser.
+
+## Issuing an X.509 certificate
+
+1. Initialize a demo CA, then paste a PEM input or upload a PEM/DER file (up to 1 MiB).
+   CSR signatures are verified before continuing. Verification proves possession of the
+   signing key; it does not verify the requested identity. Importing a certificate copies
+   only its public key.
+2. Configure the certificate using a built-in preset, a local template, or custom settings.
+   CSR subject, SAN, and usage requests are shown separately and require explicit application.
+   Unsupported requested extensions are reported and are not copied.
+3. Use Basic for common subject, duration, and SAN fields, or Advanced for other subject
+   fields, usage flags, critical extensions, and custom numeric EKU OIDs. Switching modes
+   and going back preserves settings. The full DN editor preserves unknown attributes,
+   repeated attributes, and multi-valued names that the structured editor cannot represent.
+   Exact dates use the browser's local time zone; review also displays UTC.
+4. Review the effective settings and resolve validation errors before issuing. The result
+   displays the actual certificate dates and extensions, with PEM copy and download actions.
+   Issue another retains the configuration and requires a new key import.
+
+This workflow issues end-entity certificates only. Issuer, serial number, basic constraints,
+SKI, and AKI are generated automatically. Validity must fit within the issuer's validity;
+key usages must suit the imported key. Arbitrary DER extension editing is not supported.
+
+## Local certificate templates
+
+Use **Save as template** or **Save a copy** to create a named template. Subject and SAN
+are excluded by default; explicitly opt in to store either identity field. Keys, CSRs,
+certificate inputs, issuer details, and generated fields are never stored in templates.
+Templates store a relative duration starting at issuance. Saving an exact date range
+requires explicit conversion to the displayed duration.
+
+The picker indicates modified settings. Built-in presets are immutable; local templates
+support explicit Save changes, Save a copy, rename, duplicate, and delete. Applying a
+different configuration previews the fields it will replace. Reapply template restores
+the selected template after editing. Identity fields omitted by a template are preserved.
+
+**Manage templates** supports validated version-1 JSON import by paste or file, JSON copy,
+and download of all or selected templates. ID collisions stop the import by default;
+choose replacement or a new copy explicitly. Imports are atomic. Invalid data, unsupported
+versions, and browser storage failures are shown as errors without replacing saved data.
+Templates persist only in the current browser and origin; export them for backup or transfer.
+Other tabs synchronize template-list changes through browser storage events.
 
 ## Live Demo
 

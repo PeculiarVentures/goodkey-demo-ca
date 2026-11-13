@@ -215,7 +215,10 @@ function validIp(value: string): boolean {
   );
 }
 
-export function validateSubject(subject: string): string | undefined {
+export function validateSubject(
+  subject: string,
+  options: { syntaxOnly?: boolean } = {},
+): string | undefined {
   if (!subject.trim())
     return "Enter a subject DN, or use a non-empty critical SAN for a certificate without a subject.";
   if (hasControlCharacters(subject)) return "Subject must not contain control characters.";
@@ -257,11 +260,15 @@ export function validateSubject(subject: string): string | undefined {
     for (const [oid, values] of attributes) {
       if (values.some((value) => !value.trim() || hasControlCharacters(value)))
         return "Subject attributes must have non-empty values without control characters.";
-      if (oid === "C" || oid === "2.5.4.6") {
+      if (!options.syntaxOnly && (oid === "C" || oid === "2.5.4.6")) {
         if (values.some((value) => !/^[a-z]{2}$/i.test(value)))
           return "Country (C) must be a two-letter country code.";
       }
-      if (["E", "1.2.840.113549.1.9.1"].includes(oid) && values.some((value) => !isEmail(value)))
+      if (
+        !options.syntaxOnly &&
+        ["E", "1.2.840.113549.1.9.1"].includes(oid) &&
+        values.some((value) => !isEmail(value))
+      )
         return "Subject email (E) must be a valid email address.";
     }
   } catch {

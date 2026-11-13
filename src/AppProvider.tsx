@@ -43,13 +43,25 @@ interface AppProviderProps {
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const { enqueueSnackbar } = useSnackbar();
   const [error, setError] = React.useState<Error>();
-  const [darkMode, setDarkMode] = React.useState(localStorage.getItem(lsDarkMode) === "true");
+  const [darkMode, setDarkMode] = React.useState(() => {
+    try {
+      return localStorage.getItem(lsDarkMode) === "true";
+    } catch {
+      return false;
+    }
+  });
   const [dialog, setDialog] = React.useState<DialogProps>();
 
   const context: ApplicationContextProps = {
     darkMode,
     setDarkMode: (darkMode: boolean) => {
-      localStorage.setItem(lsDarkMode, darkMode ? "true" : "false");
+      try {
+        localStorage.setItem(lsDarkMode, darkMode ? "true" : "false");
+      } catch {
+        enqueueSnackbar("Theme preference could not be saved in this browser.", {
+          variant: "warning",
+        });
+      }
       setDarkMode(darkMode);
     },
     error,
@@ -64,14 +76,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         },
       });
     },
-    setInfo: (_info: string) => {
-      // enqueueSnackbar(info, {
-      //   variant: 'success',
-      //   anchorOrigin: {
-      //     vertical: 'bottom',
-      //     horizontal: 'right',
-      //   },
-      // });
+    setInfo: (info: string) => {
+      enqueueSnackbar(info, {
+        variant: "success",
+        anchorOrigin: { vertical: "bottom", horizontal: "right" },
+      });
     },
     setWarning: (warning: string) => {
       enqueueSnackbar(warning, {

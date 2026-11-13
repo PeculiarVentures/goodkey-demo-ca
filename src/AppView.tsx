@@ -77,11 +77,11 @@ export const AppView: React.FC<ApplicationViewProps> = () => {
             <Divider orientation="vertical" variant="middle" flexItem sx={{ mx: 2 }} />
           </Toolbar>
         </AppBar>
-        <Container component="main" maxWidth="md" sx={{ mt: 10 }}>
+        <Container component="main" maxWidth="xl" sx={{ mt: 10, mb: 4 }}>
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
             <Tabs value={tabValue} onChange={handleTabChange} aria-label="CA type tabs">
-              <Tab label="X.509 CA" />
-              <Tab label="SSH CA" />
+              <Tab label="X.509 CA" id="simple-tab-0" aria-controls="simple-tabpanel-0" />
+              <Tab label="SSH CA" id="simple-tab-1" aria-controls="simple-tabpanel-1" />
             </Tabs>
           </Box>
 

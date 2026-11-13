@@ -30,6 +30,22 @@ function issues(configuration: X509Configuration) {
 }
 
 describe("subject DN validation", () => {
+  test.each(["CN=Example, C=U", "CN=Example, E=partial"])(
+    "allows semantic drafts only in explicit syntax mode: %s",
+    (subject) => {
+      expect(validateSubject(subject)).toBeDefined();
+      expect(validateSubject(subject, { syntaxOnly: true })).toBeUndefined();
+      expect(issues({ ...createPresetConfiguration(), subject })).toContainEqual(
+        expect.objectContaining({ field: "subject", code: "invalid" }),
+      );
+    },
+  );
+  test.each(["CN=Demo, ignored text", "1.40=Example", "CN=Alice\\2CBob", "CN=Bad\nName", "CN=#ff"])(
+    "retains syntax protections in explicit syntax mode: %s",
+    (subject) => {
+      expect(validateSubject(subject, { syntaxOnly: true })).toBeDefined();
+    },
+  );
   test.each([
     "CN=",
     "not a DN",
