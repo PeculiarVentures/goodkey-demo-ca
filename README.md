@@ -35,15 +35,40 @@ You can check out the live demo of the application at
 
 ## Development
 
-To run the application locally, you can use the following commands:
+Use Node.js 24.15 or newer in the Node 24 LTS line (`nvm use` reads `.nvmrc`).
+Install the exact dependency versions from the committed lockfile:
 
 ```sh
 # Install dependencies
-npm install
+npm ci
 
 # Start the development server
 npm start
 ```
+
+Open [http://127.0.0.1:8000/goodkey-demo-ca/](http://127.0.0.1:8000/goodkey-demo-ca/).
+Vite 8 uses Oxc for TypeScript and JSX transformation and Rolldown for production
+bundling. React Fast Refresh is enabled by the official Vite React plugin.
+
+```sh
+npm run typecheck     # TypeScript checks without emitting files
+npm run lint          # Oxlint; warnings fail the check
+npm run format:check  # Oxfmt formatting check
+npm run format        # Apply Oxfmt formatting
+npm test              # Run Vitest once
+npm run test:watch    # Watch tests during development
+npm run build         # Build the GitHub Pages site in dist/
+npm run preview       # Serve the production build on port 8000
+npm run check         # Run all checks and the production build
+```
+
+Vitest uses jsdom, Node's WebCrypto implementation, and an isolated fake IndexedDB
+database per test. These checks exercise the existing CA providers and stored
+keys; browser-specific behavior still needs verification in a supported browser.
+
+The production base path is `/goodkey-demo-ca/`. GitHub Actions runs all checks on
+pull requests and pushes to `main`, and deploys successful `main` builds to the
+`gh-pages` branch.
 
 ## Security Notice
 

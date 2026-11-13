@@ -1,6 +1,6 @@
 import { Table, TableBody, TableCell, TableContainer, TableRow, Typography } from "@mui/material";
 import { X509Certificate } from "@peculiar/x509";
-import * as React from 'react';
+import * as React from "react";
 import { useApplicationContext } from "./AppProvider";
 import { Convert } from "pvtsutils";
 
@@ -25,17 +25,18 @@ export const CertificateDetails: React.FC<CertificateDetailsProps> = ({ certific
   React.useEffect(() => {
     (async () => {
       const details = {} as CertificateDetails;
-      const cert = typeof certificate === 'string' ? new X509Certificate(certificate) : certificate;
+      const cert = typeof certificate === "string" ? new X509Certificate(certificate) : certificate;
 
-      details.validityDays = (cert.notAfter.getTime() - cert.notBefore.getTime()) / (1000 * 60 * 60 * 24);
+      details.validityDays =
+        (cert.notAfter.getTime() - cert.notBefore.getTime()) / (1000 * 60 * 60 * 24);
       details.leftDays = (cert.notAfter.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
 
-      details.algorithm = '';
+      details.algorithm = "";
       switch (cert.publicKey.algorithm.name) {
-        case 'RSASSA-PKCS1-v1_5':
+        case "RSASSA-PKCS1-v1_5":
           details.algorithm = `RSA ${(cert.publicKey.algorithm as RsaHashedKeyAlgorithm).modulusLength}`;
           break;
-        case 'ECDSA':
+        case "ECDSA":
           details.algorithm = `EC ${(cert.publicKey.algorithm as EcKeyAlgorithm).namedCurve}`;
           break;
         default:
@@ -55,52 +56,57 @@ export const CertificateDetails: React.FC<CertificateDetailsProps> = ({ certific
       }
 
       setDetails(details);
-    })()
-      .catch((e) => {
-        setError(e);
-      });
+    })().catch((e) => {
+      setError(e);
+    });
   }, [certificate]);
 
   return (
     <TableContainer>
-      <Typography paragraph variant='subtitle1'>Certificate details:</Typography>
-      {
-        !details ? (
-          <Typography paragraph variant='body2'>Loading...</Typography>
-        ) : (
-          <Table size="small">
-            <TableBody>
-              <TableRow>
-                <TableCell>Serial Number</TableCell>
-                <TableCell>{details.serialNumber}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Subject</TableCell>
-                <TableCell>{details.subject}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Issuer</TableCell>
-                <TableCell>{details.issuer}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Validity (days)</TableCell>
-                <TableCell>{`${details.validityDays} (${details.leftDays.toFixed(0)} left)`}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Public Key</TableCell>
-                <TableCell>{details.algorithm}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Thumbprint</TableCell>
-                <TableCell>
-                  <Typography variant='body2' color='text.secondary'>SHA-1: {details.thumbprint["SHA-1"]}</Typography>
-                  <Typography variant='body2' color='text.secondary'>SHA-256: {details.thumbprint["SHA-256"]}</Typography>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        )
-      }
+      <Typography component="p" variant="subtitle1" sx={{ mb: 2 }}>
+        Certificate details:
+      </Typography>
+      {!details ? (
+        <Typography component="p" variant="body2" sx={{ mb: 2 }}>
+          Loading...
+        </Typography>
+      ) : (
+        <Table size="small">
+          <TableBody>
+            <TableRow>
+              <TableCell>Serial Number</TableCell>
+              <TableCell>{details.serialNumber}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Subject</TableCell>
+              <TableCell>{details.subject}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Issuer</TableCell>
+              <TableCell>{details.issuer}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Validity (days)</TableCell>
+              <TableCell>{`${details.validityDays} (${details.leftDays.toFixed(0)} left)`}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Public Key</TableCell>
+              <TableCell>{details.algorithm}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Thumbprint</TableCell>
+              <TableCell>
+                <Typography variant="body2" color="text.secondary">
+                  SHA-1: {details.thumbprint["SHA-1"]}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  SHA-256: {details.thumbprint["SHA-256"]}
+                </Typography>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      )}
     </TableContainer>
   );
 };

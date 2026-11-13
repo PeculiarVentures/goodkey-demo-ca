@@ -14,29 +14,23 @@ import {
   Typography,
 } from "@mui/material";
 import * as React from "react";
-import {
-  Pkcs10CertificateRequest,
-  PublicKey,
-  X509Certificate,
-} from "@peculiar/x509";
+import { Pkcs10CertificateRequest, PublicKey, X509Certificate } from "@peculiar/x509";
 import { Convert } from "pvtsutils";
 
 import { CertificateDetails } from "./CertificateDetails";
 import { CertificateProfile, useCaContext } from "./CaProvider";
 import { useApplicationContext } from "./AppProvider";
 
-export interface CaIssueCertificateViewProps { }
+export interface CaIssueCertificateViewProps {}
 
-export const CaIssueCertificateView: React.FC<
-  CaIssueCertificateViewProps
-> = () => {
+export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () => {
   const { setError } = useApplicationContext();
   const { enrollCertificate } = useCaContext();
   const [activeStep, setActiveStep] = React.useState<number>(0);
   const [cert, setCert] = React.useState<string>("");
   const [csr, setCsr] = React.useState<PublicKey | null>(null);
   const [certName, setCertName] = React.useState<string>(
-    "CN=Test certificate, O=GoodKey, C=US, E=your@email.com"
+    "CN=Test certificate, O=GoodKey, C=US, E=your@email.com",
   );
   const [certValidity, setCertValidity] = React.useState<number>(365);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -61,8 +55,7 @@ export const CaIssueCertificateView: React.FC<
         const contents = e.target?.result;
         if (contents instanceof ArrayBuffer) {
           const view = new Uint8Array(contents);
-          const bufOrStr =
-            view[0] === 0x30 ? contents : Convert.ToBinary(contents);
+          const bufOrStr = view[0] === 0x30 ? contents : Convert.ToBinary(contents);
           try {
             const cert = new X509Certificate(bufOrStr);
             setCsr(cert.publicKey);
@@ -74,7 +67,7 @@ export const CaIssueCertificateView: React.FC<
               try {
                 const csr = new Pkcs10CertificateRequest(bufOrStr);
                 setCsr(csr.publicKey);
-              } catch (e) {
+              } catch {
                 setError(new Error("Invalid Public Key, X509 or CSR"));
                 return;
               }
@@ -116,7 +109,7 @@ export const CaIssueCertificateView: React.FC<
         try {
           const csr = new Pkcs10CertificateRequest(value);
           setCsr(csr.publicKey);
-        } catch (e) {
+        } catch {
           setError(new Error("Invalid Public Key, X509 or CSR"));
           return;
         }
@@ -126,9 +119,7 @@ export const CaIssueCertificateView: React.FC<
 
   const handleImportCsr = () => {
     if (!csr) {
-      setError(
-        new Error("CSR is empty, please paste a valid CSR, Public Key or X509")
-      );
+      setError(new Error("CSR is empty, please paste a valid CSR, Public Key or X509"));
       return;
     }
     setActiveStep(1);
@@ -149,11 +140,7 @@ export const CaIssueCertificateView: React.FC<
   const handleIssue = () => {
     (async () => {
       if (!csr) {
-        setError(
-          new Error(
-            "CSR is empty, please paste a valid CSR, Public Key or X509"
-          )
-        );
+        setError(new Error("CSR is empty, please paste a valid CSR, Public Key or X509"));
         return;
       }
       try {
@@ -200,7 +187,7 @@ export const CaIssueCertificateView: React.FC<
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Typography variant="h6" paragraph>
+      <Typography variant="h6" component="p" sx={{ mb: 2 }}>
         Issue Certificate
       </Typography>
       <Box>
@@ -222,7 +209,7 @@ export const CaIssueCertificateView: React.FC<
       {activeStep === 0 && ( // Import CSR
         <Box sx={{ mt: 2 }}>
           <Box>
-            <Typography variant="body2" paragraph>
+            <Typography variant="body2" component="p" sx={{ mb: 2 }}>
               Please paste the CSR, Public Key or X509 certificate below:
             </Typography>
             <TextField
@@ -231,8 +218,10 @@ export const CaIssueCertificateView: React.FC<
               rows={10}
               value={csr}
               onChange={handleCsrChange}
-              InputProps={{
-                style: { fontFamily: "Monaco, monospace", fontSize: "12px" },
+              slotProps={{
+                input: {
+                  style: { fontFamily: "Monaco, monospace", fontSize: "12px" },
+                },
               }}
             />
           </Box>
@@ -257,13 +246,8 @@ export const CaIssueCertificateView: React.FC<
               cursor: "pointer",
             }}
           >
-            <Typography
-              variant="body2"
-              paragraph
-              sx={{ pointerEvents: "none" }}
-            >
-              Drag and drop the CSR, Public Key or X509 certificate here or
-              click here to upload
+            <Typography variant="body2" component="p" sx={{ mb: 2, pointerEvents: "none" }}>
+              Drag and drop the CSR, Public Key or X509 certificate here or click here to upload
             </Typography>
             <input
               type="file"
@@ -279,7 +263,7 @@ export const CaIssueCertificateView: React.FC<
       )}
       {activeStep === 1 && ( // Issue Certificate
         <Box>
-          <Typography variant="body2" paragraph>
+          <Typography variant="body2" component="p" sx={{ mb: 2 }}>
             Please enter the certificate details below:
           </Typography>
           <List sx={{ width: "100%" }}>
@@ -306,9 +290,7 @@ export const CaIssueCertificateView: React.FC<
                 <InputLabel>Profile</InputLabel>
                 <Select
                   value={profile}
-                  onChange={(e) =>
-                    setProfile(e.target.value as CertificateProfile)
-                  }
+                  onChange={(e) => setProfile(e.target.value as CertificateProfile)}
                   size="small"
                 >
                   <MenuItem value="none">
@@ -322,9 +304,7 @@ export const CaIssueCertificateView: React.FC<
               </FormControl>
             </ListItem>
           </List>
-          <Box
-            sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}
-          >
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}>
             <Button onClick={handleBack}>Back</Button>
             <Button onClick={handleIssue}>Issue</Button>
           </Box>
@@ -332,12 +312,12 @@ export const CaIssueCertificateView: React.FC<
       )}
       {activeStep === 2 && ( // Done
         <Box>
-          <Typography variant="body2" paragraph>
+          <Typography variant="body2" component="p" sx={{ mb: 2 }}>
             Certificate issued successfully.
           </Typography>
           <CertificateDetails certificate={cert} />
           <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" paragraph>
+            <Typography variant="body2" component="p" sx={{ mb: 2 }}>
               Issued certificate in PEM format:
             </Typography>
             <TextField
@@ -345,15 +325,15 @@ export const CaIssueCertificateView: React.FC<
               fullWidth
               rows={10}
               value={cert}
-              InputProps={{
-                readOnly: true,
-                style: { fontFamily: "Monaco, monospace", fontSize: "12px" },
+              slotProps={{
+                input: {
+                  readOnly: true,
+                  style: { fontFamily: "Monaco, monospace", fontSize: "12px" },
+                },
               }}
             />
           </Box>
-          <Box
-            sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}
-          >
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}>
             <Button onClick={handleDone}>Done</Button>
             <Button onClick={handleCopyPem}>Copy</Button>
             <Button onClick={handleDownload}>Download</Button>

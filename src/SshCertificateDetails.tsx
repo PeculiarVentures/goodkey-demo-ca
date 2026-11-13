@@ -12,8 +12,8 @@ export const SshCertificateDetails: React.FC<SshCertificateDetailsProps> = ({
   caPublicKey,
 }) => {
   const [certDetails, setCertDetails] = React.useState<ssh.SshCertificate | null>(null);
-  const [certFingerprint, setCertFingerprint] = React.useState<string>('');
-  const [caFingerprint, setCaFingerprint] = React.useState<string>('');
+  const [certFingerprint, setCertFingerprint] = React.useState<string>("");
+  const [caFingerprint, setCaFingerprint] = React.useState<string>("");
   const [error, setError] = React.useState<string>("");
 
   React.useEffect(() => {
@@ -26,13 +26,13 @@ export const SshCertificateDetails: React.FC<SshCertificateDetailsProps> = ({
             setCertDetails(cert);
 
             // Calculate certificate fingerprint
-            const fingerprint = await ssh.SSH.thumbprint('sha256', cert, 'ssh');
+            const fingerprint = await ssh.SSH.thumbprint("sha256", cert, "ssh");
             setCertFingerprint(fingerprint);
 
             // Calculate CA fingerprint if CA public key is provided
             if (caPublicKey) {
               const caKey = await ssh.SshPublicKey.fromSSH(caPublicKey);
-              const caFp = await ssh.SSH.thumbprint('sha256', caKey, 'ssh');
+              const caFp = await ssh.SSH.thumbprint("sha256", caKey, "ssh");
               setCaFingerprint(caFp);
             }
 
@@ -66,18 +66,20 @@ export const SshCertificateDetails: React.FC<SshCertificateDetailsProps> = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Typography variant="h6" paragraph>
+      <Typography variant="h6" component="p" sx={{ mb: 2 }}>
         SSH Certificate Details
       </Typography>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
         {certFingerprint && (
           <Typography variant="body2">
-            <strong>Public key:</strong> {certDetails?.publicKey?.keyType?.toUpperCase()}-CERT {certFingerprint}
+            <strong>Public key:</strong> {certDetails?.publicKey?.keyType?.toUpperCase()}-CERT{" "}
+            {certFingerprint}
           </Typography>
         )}
         {caFingerprint && (
           <Typography variant="body2">
-            <strong>Signing CA:</strong> {certDetails?.signatureKey?.keyType?.toUpperCase()} {caFingerprint} (using {certDetails?.signatureKey?.keyType})
+            <strong>Signing CA:</strong> {certDetails?.signatureKey?.keyType?.toUpperCase()}{" "}
+            {caFingerprint} (using {certDetails?.signatureKey?.keyType})
           </Typography>
         )}
         <Typography variant="body2">

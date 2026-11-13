@@ -131,3 +131,6 @@ dist
 
 # Mac files
 .DS_Store
+
+# Vitest reports and artifacts
+.vitest/

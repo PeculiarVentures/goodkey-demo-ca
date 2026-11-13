@@ -97,15 +97,10 @@ export interface SshCaContextProps {
   initialize(name: string, algorithm: string): void;
   remove(): void;
   download(): void;
-  enrollCertificate(
-    publicKey: string,
-    params: SshEnrollParams
-  ): Promise<string>;
+  enrollCertificate(publicKey: string, params: SshEnrollParams): Promise<string>;
 }
 
-export const SshCaContext = React.createContext<SshCaContextProps | undefined>(
-  undefined
-);
+export const SshCaContext = React.createContext<SshCaContextProps | undefined>(undefined);
 
 interface SshProviderProps {
   name: string;
@@ -125,7 +120,7 @@ export const SshProvider: React.FC<SshProviderProps> = (params) => {
         if (sshCa) {
           setValue(sshCa);
         }
-      } catch (error) {
+      } catch {
         // SSH CA doesn't exist, that's normal
       }
     })();
@@ -136,8 +131,8 @@ export const SshProvider: React.FC<SshProviderProps> = (params) => {
     value,
     initialize: (name: string, algorithm: string) => {
       (async () => {
-        let alg: RsaHashedKeyGenParams | EcKeyGenParams | { name: string; };
-        let keyType: string;
+        let alg: RsaHashedKeyGenParams | EcKeyGenParams | { name: string };
+        let keyType: ssh.SshKeyType;
 
         switch (algorithm) {
           case "rsa2048":
@@ -178,13 +173,13 @@ export const SshProvider: React.FC<SshProviderProps> = (params) => {
             throw new Error(`Unsupported SSH key algorithm: ${algorithm}`);
         }
 
-        const keys = await crypto.subtle.generateKey(alg, true, [
+        const keys = (await crypto.subtle.generateKey(alg, true, [
           "sign",
           "verify",
-        ]) as CryptoKeyPair;
+        ])) as CryptoKeyPair;
 
         // Create SSH public key
-        const sshPublicKey = await ssh.SshPublicKey.fromWebCrypto(keys.publicKey, keyType as any);
+        const sshPublicKey = await ssh.SshPublicKey.fromWebCrypto(keys.publicKey, keyType);
         const publicKeyString = await sshPublicKey.toSSH();
 
         const obj: SshCaObject = {
@@ -232,7 +227,7 @@ export const SshProvider: React.FC<SshProviderProps> = (params) => {
 
         const randomBytes = new Uint8Array(8);
         crypto.getRandomValues(randomBytes);
-        const serial = BigInt('0x' + Convert.ToHex(randomBytes));
+        const serial = BigInt("0x" + Convert.ToHex(randomBytes));
 
         builder
           .setSerial(serial)
@@ -241,7 +236,7 @@ export const SshProvider: React.FC<SshProviderProps> = (params) => {
           .setValidPrincipals(params.principals)
           .setValidity(
             BigInt(Math.floor(params.validAfter.getTime() / 1000)),
-            BigInt(Math.floor(params.validBefore.getTime() / 1000))
+            BigInt(Math.floor(params.validBefore.getTime() / 1000)),
           )
           .setExtensions({
             "permit-X11-forwarding": "",
@@ -267,11 +262,7 @@ export const SshProvider: React.FC<SshProviderProps> = (params) => {
     },
   };
 
-  return (
-    <SshCaContext.Provider value={context}>
-      {params.children}
-    </SshCaContext.Provider>
-  );
+  return <SshCaContext.Provider value={context}>{params.children}</SshCaContext.Provider>;
 };
 
 export const useSshCaContext = () => {

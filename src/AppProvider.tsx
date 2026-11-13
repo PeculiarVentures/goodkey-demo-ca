@@ -1,9 +1,9 @@
-import * as React from 'react';
+import * as React from "react";
 import { useSnackbar } from "notistack";
 
 import { DLG_CONFIRM } from "./ConfirmDialog";
 
-const lsDarkMode = 'darkMode';
+const lsDarkMode = "darkMode";
 
 export interface DialogProps {
   id: string;
@@ -32,7 +32,9 @@ export interface ApplicationContextProps {
   hideDialog: () => void;
 }
 
-export const ApplicationContext = React.createContext<ApplicationContextProps | undefined>(undefined);
+export const ApplicationContext = React.createContext<ApplicationContextProps | undefined>(
+  undefined,
+);
 
 interface AppProviderProps {
   children: React.ReactNode;
@@ -41,13 +43,13 @@ interface AppProviderProps {
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const { enqueueSnackbar } = useSnackbar();
   const [error, setError] = React.useState<Error>();
-  const [darkMode, setDarkMode] = React.useState(localStorage.getItem(lsDarkMode) === 'true');
+  const [darkMode, setDarkMode] = React.useState(localStorage.getItem(lsDarkMode) === "true");
   const [dialog, setDialog] = React.useState<DialogProps>();
 
   const context: ApplicationContextProps = {
     darkMode,
     setDarkMode: (darkMode: boolean) => {
-      localStorage.setItem(lsDarkMode, darkMode ? 'true' : 'false');
+      localStorage.setItem(lsDarkMode, darkMode ? "true" : "false");
       setDarkMode(darkMode);
     },
     error,
@@ -55,14 +57,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       console.error(error);
       setError(error);
       enqueueSnackbar(error.message, {
-        variant: 'error',
+        variant: "error",
         anchorOrigin: {
-          vertical: 'bottom',
-          horizontal: 'right',
+          vertical: "bottom",
+          horizontal: "right",
         },
       });
     },
-    setInfo: (info: string) => {
+    setInfo: (_info: string) => {
       // enqueueSnackbar(info, {
       //   variant: 'success',
       //   anchorOrigin: {
@@ -73,10 +75,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     },
     setWarning: (warning: string) => {
       enqueueSnackbar(warning, {
-        variant: 'warning',
+        variant: "warning",
         anchorOrigin: {
-          vertical: 'bottom',
-          horizontal: 'right',
+          vertical: "bottom",
+          horizontal: "right",
         },
       });
     },
@@ -97,17 +99,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     },
   };
 
-  return (
-    <ApplicationContext.Provider value={context}>
-      {children}
-    </ApplicationContext.Provider>
-  );
+  return <ApplicationContext.Provider value={context}>{children}</ApplicationContext.Provider>;
 };
 
 export const useApplicationContext = () => {
   const context = React.useContext(ApplicationContext);
   if (context === undefined) {
-    throw new Error('useApplicationContext must be used within an AppProvider');
+    throw new Error("useApplicationContext must be used within an AppProvider");
   }
   return context;
 };

@@ -90,15 +90,10 @@ export interface CaContextProps {
   initialize(name: string, algorithm: string): void;
   remove(): void;
   download(): void;
-  enrollCertificate(
-    key: x509.PublicKey,
-    params: CaEnrolParams
-  ): Promise<x509.X509Certificate>;
+  enrollCertificate(key: x509.PublicKey, params: CaEnrolParams): Promise<x509.X509Certificate>;
 }
 
-export const CaContext = React.createContext<CaContextProps | undefined>(
-  undefined
-);
+export const CaContext = React.createContext<CaContextProps | undefined>(undefined);
 
 interface CaProviderProps {
   name: string;
@@ -155,10 +150,7 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
           default:
             throw new Error(`Unsupported algorithm: ${algorithm}`);
         }
-        const keys = await crypto.subtle.generateKey(alg, false, [
-          "sign",
-          "verify",
-        ]);
+        const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]);
         const serial = crypto.getRandomValues(new Uint8Array(16));
         serial[0] &= 0x7f;
         if (serial[0] === 0) {
@@ -175,7 +167,7 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
             new x509.BasicConstraintsExtension(true, 0, true),
             new x509.KeyUsagesExtension(
               x509.KeyUsageFlags.keyCertSign | x509.KeyUsageFlags.cRLSign,
-              true
+              true,
             ),
             await x509.AuthorityKeyIdentifierExtension.create(keys.publicKey),
             await x509.SubjectKeyIdentifierExtension.create(keys.publicKey),
@@ -250,17 +242,8 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
       const extensions = certParams.extensions || [];
       switch (params.profile) {
         case "code_signing":
-          extensions.push(
-            new x509.KeyUsagesExtension(
-              x509.KeyUsageFlags.digitalSignature,
-              true
-            )
-          );
-          extensions.push(
-            new x509.ExtendedKeyUsageExtension([
-              x509.ExtendedKeyUsage.codeSigning,
-            ])
-          );
+          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature, true));
+          extensions.push(new x509.ExtendedKeyUsageExtension([x509.ExtendedKeyUsage.codeSigning]));
           break;
         case "smime":
           const name = new x509.Name(params.subject);
@@ -273,13 +256,11 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
               x509.KeyUsageFlags.digitalSignature |
                 x509.KeyUsageFlags.keyEncipherment |
                 x509.KeyUsageFlags.nonRepudiation,
-              true
-            )
+              true,
+            ),
           );
           extensions.push(
-            new x509.ExtendedKeyUsageExtension([
-              x509.ExtendedKeyUsage.emailProtection,
-            ])
+            new x509.ExtendedKeyUsageExtension([x509.ExtendedKeyUsage.emailProtection]),
           );
           extensions.push(
             new x509.SubjectAlternativeNameExtension([
@@ -287,39 +268,24 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
                 type: "email",
                 value: email[0],
               },
-            ])
+            ]),
           );
           break;
         case "pdf_signing":
-          extensions.push(
-            new x509.KeyUsagesExtension(
-              x509.KeyUsageFlags.digitalSignature,
-              true
-            )
-          );
-          extensions.push(
-            new x509.ExtendedKeyUsageExtension(["1.2.840.113583.1.1.10"])
-          ); // Adobe PDF
+          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature, true));
+          extensions.push(new x509.ExtendedKeyUsageExtension(["1.2.840.113583.1.1.10"])); // Adobe PDF
           break;
         case "cms_encryption":
           extensions.push(
             new x509.KeyUsagesExtension(
-              x509.KeyUsageFlags.keyEncipherment |
-                x509.KeyUsageFlags.dataEncipherment,
-              true
-            )
+              x509.KeyUsageFlags.keyEncipherment | x509.KeyUsageFlags.dataEncipherment,
+              true,
+            ),
           );
-          extensions.push(
-            new x509.ExtendedKeyUsageExtension(["1.3.6.1.4.1.311.80.1"])
-          ); // Document Encryption
+          extensions.push(new x509.ExtendedKeyUsageExtension(["1.3.6.1.4.1.311.80.1"])); // Document Encryption
           break;
         default:
-          extensions.push(
-            new x509.KeyUsagesExtension(
-              x509.KeyUsageFlags.digitalSignature,
-              true
-            )
-          );
+          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature, true));
           break;
       }
 
@@ -329,9 +295,7 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
     },
   };
 
-  return (
-    <CaContext.Provider value={context}>{params.children}</CaContext.Provider>
-  );
+  return <CaContext.Provider value={context}>{params.children}</CaContext.Provider>;
 };
 
 export const useCaContext = () => {

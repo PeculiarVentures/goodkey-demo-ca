@@ -1,39 +1,54 @@
 {
   "name": "goodkey-demo-ca",
   "version": "1.0.0",
+  "private": true,
   "description": "A demo Certificate Authority (CA) interface for easy digital certificate issuance and management based on CSRs.",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
+  "type": "module",
   "scripts": {
-    "start": "webpack serve --mode development --open",
-    "build": "webpack --mode production"
+    "start": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --port 8000",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint --deny-warnings",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run build"
   },
   "dependencies": {
-    "@emotion/react": "^11.11.4",
-    "@emotion/styled": "^11.11.0",
-    "@mui/icons-material": "^5.15.13",
-    "@mui/material": "^5.15.13",
-    "@mui/styled-engine-sc": "^5.14.10",
-    "@peculiar/ssh": "^1.0.0",
-    "@peculiar/x509": "^1.9.7",
-    "notistack": "^3.0.1",
-    "pvtsutils": "^1.3.5",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^9.5.0",
+    "@mui/material": "^9.5.0",
+    "@peculiar/ssh": "^3.0.0",
+    "@peculiar/x509": "^3.1.0",
+    "notistack": "^3.0.2",
+    "pvtsutils": "^1.3.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
-    "@types/node": "^20.11.28",
-    "@types/react": "^18.2.66",
-    "@types/react-dom": "^18.2.22",
-    "css-loader": "^6.10.0",
-    "html-webpack-plugin": "^5.6.0",
-    "style-loader": "^3.3.4",
-    "ts-loader": "^9.5.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.4.2",
-    "webpack": "^5.90.3",
-    "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.0.3"
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "fake-indexeddb": "^6.2.8",
+    "jsdom": "^31.0.1",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "engines": {
+    "node": "^24.15.0"
+  }
 }
