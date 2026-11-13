@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 import { useApplicationContext } from "./AppProvider";
 import { ConfirmDialog, DLG_CONFIRM } from "./ConfirmDialog";
 import { CustomDialog, DLG_CUSTOM } from "./CustomDialog";
@@ -19,9 +19,5 @@ export const DialogLayout: React.FC = () => {
       break;
   }
 
-  return (
-    <React.Fragment>
-      {content}
-    </React.Fragment>
-  );
+  return <React.Fragment>{content}</React.Fragment>;
 };

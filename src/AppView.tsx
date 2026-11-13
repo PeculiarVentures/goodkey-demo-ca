@@ -1,5 +1,17 @@
-import { AppBar, Box, Container, CssBaseline, Divider, Tab, Tabs, ThemeProvider, Toolbar, Typography, createTheme } from "@mui/material";
-import * as React from 'react';
+import {
+  AppBar,
+  Box,
+  Container,
+  CssBaseline,
+  Divider,
+  Tab,
+  Tabs,
+  ThemeProvider,
+  Toolbar,
+  Typography,
+  createTheme,
+} from "@mui/material";
+import * as React from "react";
 
 import { useApplicationContext } from "./AppProvider";
 import { DialogLayout } from "./DialogLayout";
@@ -11,8 +23,7 @@ import { ThemeSwitcher } from "./ThemeSwitcher";
 
 const drawerWidth = 0;
 
-export interface ApplicationViewProps {
-}
+export interface ApplicationViewProps {}
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -31,24 +42,18 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ pt: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
     </div>
   );
 }
 
-export const AppView: React.FC<ApplicationViewProps> = (props) => {
-  const {
-    darkMode,
-  } = useApplicationContext();
+export const AppView: React.FC<ApplicationViewProps> = () => {
+  const { darkMode } = useApplicationContext();
   const [tabValue, setTabValue] = React.useState(0);
 
   const theme = createTheme({
     palette: {
-      mode: darkMode ? 'dark' : 'light',
+      mode: darkMode ? "dark" : "light",
     },
   });
 
@@ -59,10 +64,11 @@ export const AppView: React.FC<ApplicationViewProps> = (props) => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ display: 'flex' }}>
+      <Box sx={{ display: "flex" }}>
         <AppBar
           position="fixed"
-          sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}>
+          sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}
+        >
           <Toolbar>
             <Typography variant="h6" sx={{ flexGrow: 1 }}>
               GoodKey Demo CA
@@ -71,11 +77,11 @@ export const AppView: React.FC<ApplicationViewProps> = (props) => {
             <Divider orientation="vertical" variant="middle" flexItem sx={{ mx: 2 }} />
           </Toolbar>
         </AppBar>
-        <Container component="main" maxWidth="md" sx={{ mt: 10 }}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Container component="main" maxWidth="xl" sx={{ mt: 10, mb: 4 }}>
+          <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
             <Tabs value={tabValue} onChange={handleTabChange} aria-label="CA type tabs">
-              <Tab label="X.509 CA" />
-              <Tab label="SSH CA" />
+              <Tab label="X.509 CA" id="simple-tab-0" aria-controls="simple-tabpanel-0" />
+              <Tab label="SSH CA" id="simple-tab-1" aria-controls="simple-tabpanel-1" />
             </Tabs>
           </Box>
 
@@ -93,6 +99,6 @@ export const AppView: React.FC<ApplicationViewProps> = (props) => {
         </Container>
       </Box>
       <DialogLayout />
-    </ThemeProvider >
+    </ThemeProvider>
   );
 };

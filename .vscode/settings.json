@@ -7,5 +7,7 @@
     "**/.DS_Store": true,
     "**/Thumbs.db": true,
     "**/node_modules": true
-  }
+  },
+  "js/ts.tsdk.path": "node_modules/typescript",
+  "js/ts.experimental.useTsgo": true
 }

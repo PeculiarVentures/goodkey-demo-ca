@@ -1,11 +1,8 @@
-import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Button
-} from '@mui/material';
-import * as React from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
+import * as React from "react";
 import { useApplicationContext } from "./AppProvider";
 
-export const DLG_CUSTOM = 'custom';
+export const DLG_CUSTOM = "custom";
 
 export interface CustomDialogProps {
   open: boolean;
@@ -22,9 +19,7 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({ open }) => {
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>{dialog?.title}</DialogTitle>
-      <DialogContent>
-        {dialog?.content}
-      </DialogContent>
+      <DialogContent>{dialog?.content}</DialogContent>
       <DialogActions sx={{ mb: 1, mr: 1 }}>
         <Button
           variant="contained"
@@ -33,7 +28,10 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({ open }) => {
               dialog.onConfirm();
             }
             onClose();
-          }}>Ok</Button>
+          }}
+        >
+          Ok
+        </Button>
         <Button onClick={onClose}>Cancel</Button>
       </DialogActions>
     </Dialog>

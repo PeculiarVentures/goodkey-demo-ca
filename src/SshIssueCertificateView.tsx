@@ -56,7 +56,9 @@ async function parsePublicKey(input: string | ArrayBuffer): Promise<string> {
         const sshKey = await ssh.SshPublicKey.fromWebCrypto(cryptoKey);
         return await sshKey.toSSH();
       } catch {
-        throw new Error("Unsupported DER format. Only X509 certificate and SPKI public key DER are supported.");
+        throw new Error(
+          "Unsupported DER format. Only X509 certificate and SPKI public key DER are supported.",
+        );
       }
     }
   }
@@ -101,14 +103,14 @@ async function parsePublicKey(input: string | ArrayBuffer): Promise<string> {
     // Not SPKI, continue
   }
 
-  throw new Error("Unsupported key format. Please provide SSH public key, SSH certificate, X509 certificate, or SPKI public key in PEM or DER format.");
+  throw new Error(
+    "Unsupported key format. Please provide SSH public key, SSH certificate, X509 certificate, or SPKI public key in PEM or DER format.",
+  );
 }
 
-export interface SshIssueCertificateViewProps { }
+export interface SshIssueCertificateViewProps {}
 
-export const SshIssueCertificateView: React.FC<
-  SshIssueCertificateViewProps
-> = () => {
+export const SshIssueCertificateView: React.FC<SshIssueCertificateViewProps> = () => {
   const { setError } = useApplicationContext();
   const { enrollCertificate, value: caValue } = useSshCaContext();
   const [activeStep, setActiveStep] = React.useState<number>(0);
@@ -177,7 +179,7 @@ export const SshIssueCertificateView: React.FC<
     try {
       const parsedKey = await parsePublicKey(value);
       setSshPublicKey(parsedKey);
-    } catch (error) {
+    } catch {
       // If parsing fails, clear the field
       setSshPublicKey("");
     }
@@ -224,7 +226,10 @@ export const SshIssueCertificateView: React.FC<
         const validBefore = new Date(now.getTime() + validityDays * MILLISECONDS_PER_DAY);
 
         const params: SshEnrollParams = {
-          principals: principals.split(',').map(p => p.trim()).filter(p => p),
+          principals: principals
+            .split(",")
+            .map((p) => p.trim())
+            .filter((p) => p),
           validAfter,
           validBefore,
           certType,
@@ -265,7 +270,7 @@ export const SshIssueCertificateView: React.FC<
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Typography variant="h6" paragraph>
+      <Typography variant="h6" component="p" sx={{ mb: 2 }}>
         Issue SSH Certificate
       </Typography>
       <Box>
@@ -288,8 +293,9 @@ export const SshIssueCertificateView: React.FC<
       {activeStep === 0 && ( // Import SSH Public Key
         <Box sx={{ mt: 2 }}>
           <Box>
-            <Typography variant="body2" paragraph>
-              Please paste the SSH public key, SSH certificate, X509 certificate, or SPKI public key below. The field will display the extracted SSH public key:
+            <Typography variant="body2" component="p" sx={{ mb: 2 }}>
+              Please paste the SSH public key, SSH certificate, X509 certificate, or SPKI public key
+              below. The field will display the extracted SSH public key:
             </Typography>
             <TextField
               multiline
@@ -298,8 +304,10 @@ export const SshIssueCertificateView: React.FC<
               value={sshPublicKey}
               onChange={handleSshPublicKeyChange}
               placeholder="ssh-rsa AAAAB3NzaC1yc2EAAAA... user@example.com"
-              InputProps={{
-                style: { fontFamily: "Monaco, monospace", fontSize: "12px" },
+              slotProps={{
+                input: {
+                  style: { fontFamily: "Monaco, monospace", fontSize: "12px" },
+                },
               }}
             />
           </Box>
@@ -324,12 +332,9 @@ export const SshIssueCertificateView: React.FC<
               cursor: "pointer",
             }}
           >
-            <Typography
-              variant="body2"
-              paragraph
-              sx={{ pointerEvents: "none" }}
-            >
-              Drag and drop SSH public key, SSH certificate, X509 certificate, or SPKI public key file here or click here to upload
+            <Typography variant="body2" component="p" sx={{ mb: 2, pointerEvents: "none" }}>
+              Drag and drop SSH public key, SSH certificate, X509 certificate, or SPKI public key
+              file here or click here to upload
             </Typography>
             <input
               type="file"
@@ -347,7 +352,7 @@ export const SshIssueCertificateView: React.FC<
 
       {activeStep === 1 && ( // Issue Certificate
         <Box>
-          <Typography variant="body2" paragraph>
+          <Typography variant="body2" component="p" sx={{ mb: 2 }}>
             Please enter the SSH certificate details below:
           </Typography>
           <List sx={{ width: "100%" }}>
@@ -384,29 +389,17 @@ export const SshIssueCertificateView: React.FC<
             </ListItem>
             <ListItem>
               <FormControl component="fieldset">
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>Certificate Type</Typography>
-                <RadioGroup
-                  value={certType}
-                  onChange={handleCertTypeChange}
-                  row
-                >
-                  <FormControlLabel
-                    value="user"
-                    control={<Radio />}
-                    label="User Certificate"
-                  />
-                  <FormControlLabel
-                    value="host"
-                    control={<Radio />}
-                    label="Host Certificate"
-                  />
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Certificate Type
+                </Typography>
+                <RadioGroup value={certType} onChange={handleCertTypeChange} row>
+                  <FormControlLabel value="user" control={<Radio />} label="User Certificate" />
+                  <FormControlLabel value="host" control={<Radio />} label="Host Certificate" />
                 </RadioGroup>
               </FormControl>
             </ListItem>
           </List>
-          <Box
-            sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}
-          >
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}>
             <Button onClick={handleBack}>Back</Button>
             <Button onClick={handleIssue}>Issue Certificate</Button>
           </Box>
@@ -415,12 +408,12 @@ export const SshIssueCertificateView: React.FC<
 
       {activeStep === 2 && ( // Done
         <Box>
-          <Typography variant="body2" paragraph>
+          <Typography variant="body2" component="p" sx={{ mb: 2 }}>
             SSH certificate issued successfully.
           </Typography>
           <SshCertificateDetails certificate={cert} caPublicKey={caValue?.publicKey} />
           <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" paragraph>
+            <Typography variant="body2" component="p" sx={{ mb: 2 }}>
               Issued SSH certificate:
             </Typography>
             <TextField
@@ -428,15 +421,15 @@ export const SshIssueCertificateView: React.FC<
               fullWidth
               rows={5}
               value={cert}
-              InputProps={{
-                readOnly: true,
-                style: { fontFamily: "Monaco, monospace", fontSize: "12px" },
+              slotProps={{
+                input: {
+                  readOnly: true,
+                  style: { fontFamily: "Monaco, monospace", fontSize: "12px" },
+                },
               }}
             />
           </Box>
-          <Box
-            sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}
-          >
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}>
             <Button onClick={handleDone}>Done</Button>
             <Button onClick={handleCopyPem}>Copy</Button>
             <Button onClick={handleDownload}>Download</Button>
