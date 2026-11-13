@@ -14,11 +14,13 @@ import {
   Typography,
 } from "@mui/material";
 import * as React from "react";
-import { Pkcs10CertificateRequest, PublicKey, X509Certificate } from "@peculiar/x509";
+import { PublicKey, X509Certificate } from "@peculiar/x509";
 import { Convert } from "pvtsutils";
 
 import { CertificateDetails } from "./CertificateDetails";
-import { CertificateProfile, useCaContext } from "./CaProvider";
+import { useCaContext } from "./CaProvider";
+import { createPresetConfiguration, type CertificatePresetId } from "./certificates/presets";
+import { parseCertificateInput } from "./certificates/input";
 import { useApplicationContext } from "./AppProvider";
 
 export interface CaIssueCertificateViewProps {}
@@ -29,6 +31,8 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
   const [activeStep, setActiveStep] = React.useState<number>(0);
   const [cert, setCert] = React.useState<string>("");
   const [csr, setCsr] = React.useState<PublicKey | null>(null);
+  const [inputText, setInputText] = React.useState("");
+  const parseSequence = React.useRef(0);
   const [certName, setCertName] = React.useState<string>(
     "CN=Test certificate, O=GoodKey, C=US, E=your@email.com",
   );
@@ -36,7 +40,7 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [file, setFile] = React.useState<File | null>(null);
   const [isDragOver, setIsDragOver] = React.useState(false);
-  const [profile, setProfile] = React.useState<CertificateProfile>("none");
+  const [profile, setProfile] = React.useState<CertificatePresetId>("none");
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -48,32 +52,26 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
     setIsDragOver(false);
   };
 
+  const parseInput = async (input: string | ArrayBuffer) => {
+    const sequence = ++parseSequence.current;
+    setCsr(null);
+    try {
+      const parsed = await parseCertificateInput(input);
+      if (parseSequence.current !== sequence) return;
+      setCsr(parsed.publicKey);
+      if (typeof input !== "string") setInputText(parsed.publicKey.toString("pem"));
+    } catch (error) {
+      if (parseSequence.current === sequence)
+        setError(error instanceof Error ? error : new Error(String(error)));
+    }
+  };
+
   React.useEffect(() => {
     if (file) {
       const reader = new FileReader();
-      reader.onload = function (e) {
-        const contents = e.target?.result;
-        if (contents instanceof ArrayBuffer) {
-          const view = new Uint8Array(contents);
-          const bufOrStr = view[0] === 0x30 ? contents : Convert.ToBinary(contents);
-          try {
-            const cert = new X509Certificate(bufOrStr);
-            setCsr(cert.publicKey);
-          } catch {
-            try {
-              const publicKey = new PublicKey(bufOrStr);
-              setCsr(publicKey);
-            } catch {
-              try {
-                const csr = new Pkcs10CertificateRequest(bufOrStr);
-                setCsr(csr.publicKey);
-              } catch {
-                setError(new Error("Invalid Public Key, X509 or CSR"));
-                return;
-              }
-            }
-          }
-        }
+      reader.onload = (event) => {
+        const contents = event.target?.result;
+        if (contents instanceof ArrayBuffer) void parseInput(contents);
       };
       reader.readAsArrayBuffer(file);
     }
@@ -96,25 +94,9 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
     }
   };
 
-  const handleCsrChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    try {
-      const cert = new X509Certificate(value);
-      setCsr(cert.publicKey);
-    } catch {
-      try {
-        const publicKey = new PublicKey(value);
-        setCsr(publicKey);
-      } catch {
-        try {
-          const csr = new Pkcs10CertificateRequest(value);
-          setCsr(csr.publicKey);
-        } catch {
-          setError(new Error("Invalid Public Key, X509 or CSR"));
-          return;
-        }
-      }
-    }
+  const handleCsrChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputText(event.target.value);
+    void parseInput(event.target.value);
   };
 
   const handleImportCsr = () => {
@@ -144,11 +126,14 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
         return;
       }
       try {
-        const issuedCert = await enrollCertificate(csr, {
-          subject: certName,
-          validity: certValidity,
-          profile,
-        });
+        const issuedCert = await enrollCertificate(
+          csr,
+          createPresetConfiguration(profile, {
+            subject: certName,
+            validityDays: certValidity,
+            keyAlgorithm: csr.algorithm.name,
+          }),
+        );
 
         setCert(issuedCert.toString());
         setActiveStep(2);
@@ -176,7 +161,9 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
   };
 
   const handleDone = () => {
+    ++parseSequence.current;
     setCsr(null);
+    setInputText("");
     setActiveStep(0);
     setCert("");
   };
@@ -216,7 +203,7 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
               multiline
               fullWidth
               rows={10}
-              value={csr}
+              value={inputText}
               onChange={handleCsrChange}
               slotProps={{
                 input: {
@@ -290,7 +277,7 @@ export const CaIssueCertificateView: React.FC<CaIssueCertificateViewProps> = () 
                 <InputLabel>Profile</InputLabel>
                 <Select
                   value={profile}
-                  onChange={(e) => setProfile(e.target.value as CertificateProfile)}
+                  onChange={(e) => setProfile(e.target.value as CertificatePresetId)}
                   size="small"
                 >
                   <MenuItem value="none">

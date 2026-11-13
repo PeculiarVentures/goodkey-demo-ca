@@ -1,6 +1,9 @@
 import * as x509 from "@peculiar/x509";
 import { Convert } from "pvtsutils";
 import * as React from "react";
+import { issueCertificate } from "./certificates/issuer";
+import { resolveCertificateConfiguration } from "./certificates/validation";
+import type { X509Configuration } from "./certificates/types";
 
 const CA_DB_NAME = "ca-db";
 const CA_STORE_NAME = "ca-store";
@@ -70,19 +73,6 @@ export class CaDataBase {
   }
 }
 
-export type CertificateProfile =
-  | "none"
-  | "code_signing"
-  | "smime"
-  | "pdf_signing"
-  | "cms_encryption";
-
-export interface CaEnrolParams {
-  subject: string;
-  validity: number;
-  profile: CertificateProfile;
-}
-
 export interface CaContextProps {
   name: string;
   value?: CaObject;
@@ -90,7 +80,10 @@ export interface CaContextProps {
   initialize(name: string, algorithm: string): void;
   remove(): void;
   download(): void;
-  enrollCertificate(key: x509.PublicKey, params: CaEnrolParams): Promise<x509.X509Certificate>;
+  enrollCertificate(
+    key: x509.PublicKey,
+    configuration: X509Configuration,
+  ): Promise<x509.X509Certificate>;
 }
 
 export const CaContext = React.createContext<CaContextProps | undefined>(undefined);
@@ -208,90 +201,20 @@ export const CaProvider: React.FC<CaProviderProps> = (params) => {
         })();
       }
     },
-    enrollCertificate: async (key: x509.PublicKey, params: CaEnrolParams) => {
+    enrollCertificate: async (key: x509.PublicKey, configuration: X509Configuration) => {
       if (!value) {
         throw new Error("CA is not initialized");
       }
-
-      const caCert = new x509.X509Certificate(value.cert);
-
-      const serial = crypto.getRandomValues(new Uint8Array(16));
-      serial[0] &= 0x7f;
-      if (serial[0] === 0) {
-        serial[1] |= 0x80;
-      }
-
-      const certParams: x509.X509CertificateCreateParams = {
-        serialNumber: Convert.ToHex(serial),
-        subject: params.subject,
-        issuer: caCert.subject,
-        notBefore: new Date(),
-        notAfter: new Date(Date.now() + 1000 * 60 * 60 * 24 * params.validity),
-        signingAlgorithm: {
-          hash: "SHA-256",
-          ...caCert.publicKey.algorithm,
-        },
-        publicKey: key,
+      const caCertificate = new x509.X509Certificate(value.cert);
+      return issueCertificate({
+        caCertificate,
         signingKey: value.key,
-        extensions: [
-          new x509.BasicConstraintsExtension(false, undefined, true),
-          await x509.AuthorityKeyIdentifierExtension.create(caCert),
-          await x509.SubjectKeyIdentifierExtension.create(key),
-        ],
-      };
-      const extensions = certParams.extensions || [];
-      switch (params.profile) {
-        case "code_signing":
-          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature, true));
-          extensions.push(new x509.ExtendedKeyUsageExtension([x509.ExtendedKeyUsage.codeSigning]));
-          break;
-        case "smime":
-          const name = new x509.Name(params.subject);
-          const email = name.getField("E");
-          if (!email.length) {
-            throw new Error("Subject must contain an email field (E)");
-          }
-          extensions.push(
-            new x509.KeyUsagesExtension(
-              x509.KeyUsageFlags.digitalSignature |
-                x509.KeyUsageFlags.keyEncipherment |
-                x509.KeyUsageFlags.nonRepudiation,
-              true,
-            ),
-          );
-          extensions.push(
-            new x509.ExtendedKeyUsageExtension([x509.ExtendedKeyUsage.emailProtection]),
-          );
-          extensions.push(
-            new x509.SubjectAlternativeNameExtension([
-              {
-                type: "email",
-                value: email[0],
-              },
-            ]),
-          );
-          break;
-        case "pdf_signing":
-          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature, true));
-          extensions.push(new x509.ExtendedKeyUsageExtension(["1.2.840.113583.1.1.10"])); // Adobe PDF
-          break;
-        case "cms_encryption":
-          extensions.push(
-            new x509.KeyUsagesExtension(
-              x509.KeyUsageFlags.keyEncipherment | x509.KeyUsageFlags.dataEncipherment,
-              true,
-            ),
-          );
-          extensions.push(new x509.ExtendedKeyUsageExtension(["1.3.6.1.4.1.311.80.1"])); // Document Encryption
-          break;
-        default:
-          extensions.push(new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature, true));
-          break;
-      }
-
-      const cert = await x509.X509CertificateGenerator.create(certParams);
-
-      return cert;
+        publicKey: key,
+        configuration: resolveCertificateConfiguration(configuration, {
+          caCertificate,
+          publicKey: key,
+        }),
+      });
     },
   };
 

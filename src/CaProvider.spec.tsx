@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import * as x509 from "@peculiar/x509";
 import { expect, test } from "vitest";
 import { CaProvider, useCaContext } from "./CaProvider";
+import { createPresetConfiguration } from "./certificates/presets";
 
 test("a stored X.509 CA key can issue a verifiable certificate after reload", async () => {
   const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -21,11 +22,14 @@ test("a stored X.509 CA key can issue a verifiable certificate after reload", as
     "verify",
   ]);
   const publicKey = new x509.PublicKey(await crypto.subtle.exportKey("spki", keys.publicKey));
-  const certificate = await reloaded.result.current.enrollCertificate(publicKey, {
-    subject: "CN=Demo signer",
-    profile: "code_signing",
-    validity: 30,
-  });
+  const certificate = await reloaded.result.current.enrollCertificate(
+    publicKey,
+    createPresetConfiguration("code_signing", {
+      subject: "CN=Demo signer",
+      validityDays: 30,
+      keyAlgorithm: publicKey.algorithm.name,
+    }),
+  );
 
   const root = new x509.X509Certificate(rootPem!);
   expect(await certificate.verify({ publicKey: root.publicKey })).toBe(true);
